@@ -58,4 +58,5 @@ def enftAlert(request):
             # print('매도 호가')
             # print(now_price)
             if nft_bank_estimate > now_price * 1.1:
-                start_telegram_poll(updater, dispatcher, token_id_deland)
+                start_telegram_poll(updater, dispatcher, token_id_deland, nft_bank_estimate, now_price)
+

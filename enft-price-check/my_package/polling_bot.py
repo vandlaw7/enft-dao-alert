@@ -112,11 +112,13 @@ def receive_poll_answer(update: Update, context: CallbackContext) -> None:
 # updater.idle()
 
 # 원하는 투표를 진행합니다.
-def start_telegram_poll(updater, dispatcher, token_id):
+def start_telegram_poll(updater, dispatcher, token_id, estimated, now_price):
     questions = ["사요", "사지 마요"]
+    underrated_ratio = round(100 * (estimated - now_price) / estimated, 2)
     message = updater.bot.send_poll(
         chat_id,
-        f'디센트럴 랜드 토큰 아이디 {token_id}번 매물이 저평가돼 있습니다. 구매 여부를 투표해주세요.',
+        f'디센트럴 랜드 토큰 아이디 {token_id}번 매물이 {underrated_ratio}%만큼 저평가돼 있습니다. NFT bank의 가치 추정치는 {estimated} ETH이고, '
+        f'현재 매도 호가는 {now_price} ETH입니다. 구매 여부를 투표해주세요.',
         questions,
         is_anonymous=False
     )
@@ -129,5 +131,6 @@ def start_telegram_poll(updater, dispatcher, token_id):
             "answers": 0,
         }
     }
+
     # 투표 정보가 payload에 담기면, 투표 결과를 저장하기 위해 밑에 핸들러에다가 전달하게 됩니다.
     dispatcher.bot_data.update(payload)
