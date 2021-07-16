@@ -26,33 +26,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-token = '1691123609:AAED96Yb-mhgf84rP_P8vOxpDqG3QxsnY-0'  # 봇토큰
+token_jay = '1691123609:AAED96Yb-mhgf84rP_P8vOxpDqG3QxsnY-0'
+token = '1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8'
 chat_id = '-443191914'  # 뿌릴 단톡방 id
 
 
-def poll(update: Update, context: CallbackContext) -> None:
-    """Sends a predefined poll for command handler"""
-    questions = ["Good", "Really good", "Fantastic", "Great"]
-    message = context.bot.send_poll(
-        update.effective_chat.id,
-        # chat_id,
-        "How are you?",
-        questions,
-        is_anonymous=False,
-    )
-    # Save some info about the poll the bot_data for later use in receive_poll_answer
-    payload = {
-        message.poll.id: {
-            "questions": questions,
-            "message_id": message.message_id,
-            # "chat_id": update.effective_chat.id,
-            "chat_id": chat_id,
-            "answers": 0,
-        }
-    }
-    context.bot_data.update(payload)
-
-
+''' 
+Because we designed serverless system, server cannot maintain thie recieve_poll_answer functions.
+We have to find another way. 
+'''
 def receive_poll_answer(update: Update, context: CallbackContext) -> None:
     """Summarize a users poll vote"""
     answer = update.poll_answer
@@ -94,22 +76,6 @@ def receive_poll_answer(update: Update, context: CallbackContext) -> None:
             context.bot_data[poll_id]["chat_id"], context.bot_data[poll_id]["message_id"]
         )
 
-
-
-"""Run bot."""
-# Create the Updater and pass it your bot's token.
-# updater = Updater(token=token)
-# dispatcher = updater.dispatcher
-#
-# dispatcher.add_handler(PollAnswerHandler(
-#     receive_poll_answer))  # 투표 결과는 receive_poll_answer 이 함수의 votes_dict로 저장해두면 좋을 것 같아서 print구문 넣어뒀습니다ㅠㅠ
-#
-# # Start the Bot
-# updater.start_polling()
-
-# Run the bot until the user presses Ctrl-C or the process receives SIGINT,
-# SIGTERM or SIGABRT
-# updater.idle()
 
 # 원하는 투표를 진행합니다.
 def start_telegram_poll(updater, dispatcher, token_id, estimated, now_price):
