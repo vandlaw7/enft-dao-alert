@@ -7,7 +7,7 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 
-from my_package.polling_bot import start_telegram_poll
+from my_package.polling_bot import start_telegram_poll, start_fake_poll
 from my_package.global_var import total_gov_token
 
 # db Setup
@@ -57,6 +57,10 @@ def check_prices(updater, dispatcher):
     query = gql(decentral_land_string)
     result = client.execute(query)
     print(result)
+
+    # 투표 체크용 가짜
+    start_fake_poll(updater, dispatcher)
+
     for i in range(len(result['orders'])):
         print(f'{i}번째 매물')
         token_id_deland = result['orders'][i]['tokenId']
@@ -78,7 +82,7 @@ def check_prices(updater, dispatcher):
                     'token_id': token_id_deland,
                     'category': category,
                     'approval_token_amount': 0,
-                    'buy_limit_token_amount': round(total_gov_token * (2 / 3)),
+                    'buy_limit_token_amount': total_gov_token * (1/2),
                     'on_sale': True
                 }
                 db.collection('nft_pendings').add(data)

@@ -9,6 +9,8 @@ from my_package.nft_assset_check import check_prices
 import json
 import telegram
 import logging
+import datetime
+import requests
 
 # Logging is cool!
 logger = logging.getLogger()
@@ -26,6 +28,7 @@ ERROR_RESPONSE = {
     'statusCode': 400,
     'body': json.dumps('Oops, something went wrong!')
 }
+
 
 def configure_telegram():
     """
@@ -49,13 +52,19 @@ def enftAlert(request):
         receive_poll_answer))
 
     updater.start_polling()
-    updater.idle()
+
+    print("enftAlert")
+    print(datetime.datetime.now())
 
     check_prices(updater, dispatcher)
 
+    requests.get(
+        'https://api.telegram.org/bot1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8/setWebhook?url=https://us-central1-enft-project.cloudfunctions.net/pollHandle')
+
+    return OK_RESPONSE
 
 def pollHandle(request):
     """ Runs the Telegram webhook """
     print(request)
     print(request.data)
-    return "Hello, World/n"
+    return OK_RESPONSE

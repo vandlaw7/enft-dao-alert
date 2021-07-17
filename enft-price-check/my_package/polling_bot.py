@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+import requests
 
 from telegram import (
     Poll,
@@ -30,11 +31,14 @@ token_jay = '1691123609:AAED96Yb-mhgf84rP_P8vOxpDqG3QxsnY-0'
 token = '1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8'
 chat_id = '-443191914'  # 뿌릴 단톡방 id
 
+webhook_endpoint = 'https://us-central1-enft-project.cloudfunctions.net/pollHandle'
 
 ''' 
 Because we designed serverless system, server cannot maintain thie recieve_poll_answer functions.
 We have to find another way. 
 '''
+
+
 def receive_poll_answer(update: Update, context: CallbackContext) -> None:
     """Summarize a users poll vote"""
     answer = update.poll_answer
@@ -76,6 +80,8 @@ def receive_poll_answer(update: Update, context: CallbackContext) -> None:
             context.bot_data[poll_id]["chat_id"], context.bot_data[poll_id]["message_id"]
         )
 
+    requests.post(webhook_endpoint, json=votes_dict)
+
 
 # 원하는 투표를 진행합니다.
 def start_telegram_poll(updater, dispatcher, token_id, estimated, now_price):
@@ -85,6 +91,28 @@ def start_telegram_poll(updater, dispatcher, token_id, estimated, now_price):
         chat_id,
         f'디센트럴 랜드 토큰 아이디 {token_id}번 매물이 {underrated_ratio}%만큼 저평가돼 있습니다. NFT bank의 가치 추정치는 {estimated} ETH이고, '
         f'현재 매도 호가는 {now_price} ETH입니다. 구매 여부를 투표해주세요.',
+        questions,
+        is_anonymous=False
+    )
+    payload = {
+        message.poll.id: {
+            "questions": questions,
+            "message_id": message.message_id,
+            # "chat_id": update.effective_chat.id,
+            "chat_id": chat_id,
+            "answers": 0,
+        }
+    }
+
+    # 투표 정보가 payload에 담기면, 투표 결과를 저장하기 위해 밑에 핸들러에다가 전달하게 됩니다.
+    dispatcher.bot_data.update(payload)
+
+
+def start_fake_poll(updater, dispatcher):
+    questions = ["사요", "사지 마요"]
+    message = updater.bot.send_poll(
+        chat_id,
+        f'투표 기능 체크용입니다. 실제 투표가 아닙니다.',
         questions,
         is_anonymous=False
     )
