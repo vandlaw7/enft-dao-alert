@@ -73,7 +73,7 @@ def check_prices(updater, dispatcher):
             now_price = int(result['orders'][i]['price']) / pow(10, 18)
             if nft_bank_estimate > now_price * 1.1:
                 print("당장 사요!")
-                start_telegram_poll(updater, dispatcher, token_id_deland, nft_bank_estimate, now_price)
+                poll_id = start_telegram_poll(updater, dispatcher, token_id_deland, nft_bank_estimate, now_price)
 
                 data = {
                     'project': 'decentralland',
@@ -81,8 +81,12 @@ def check_prices(updater, dispatcher):
                     'chain': 'ethereum',
                     'token_id': token_id_deland,
                     'category': category,
-                    'approval_token_amount': 0,
-                    'buy_limit_token_amount': total_gov_token * (1/2),
-                    'on_sale': True
+                    'price_buy': now_price,
+                    'price_est': nft_bank_estimate,
+                    'poll_id': poll_id, # for telegram
+                    'consent_token_amount': 0,
+                    'buy_limit': total_gov_token * (1 / 2),
+                    'buy_consent_list': [],
+                    'buy_reject_list': []
                 }
                 db.collection('nft_pendings').add(data)

@@ -107,6 +107,8 @@ def start_telegram_poll(updater, dispatcher, token_id, estimated, now_price):
     # 투표 정보가 payload에 담기면, 투표 결과를 저장하기 위해 밑에 핸들러에다가 전달하게 됩니다.
     dispatcher.bot_data.update(payload)
 
+    return message.poll.id
+
 
 def start_fake_poll(updater, dispatcher):
     questions = ["사요", "사지 마요"]
