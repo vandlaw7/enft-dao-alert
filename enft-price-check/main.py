@@ -63,28 +63,26 @@ def pollHandle_flask():
 
     poll_id = chat_dict['poll_id']
     telegram_id = chat_dict['user']['id']
-    # 0 means 'buy'
-    buy_consent = (chat_dict['option_ids'][0] == 0)
-
     nft_in_poll = db.collection('nft_pendings').where('poll_id', '==', poll_id).get()
+    nft_dict = nft_in_poll.to_dict()
+
+    # 0 means 'consent'
+    consent = (chat_dict['option_ids'][0] == 0)
 
     if len(nft_in_poll) == 0:
         return ERROR_RESPONSE
 
-    nft_dict = nft_in_poll.to_dict()
-    if buy_consent:
-        user_doc = db.collection('members').where('telegram_id', '==', telegram_id)
-        gov_token = user_doc.to_dict()['gov_token']
+    user_doc = db.collection('members').where('telegram_id', '==', telegram_id)
+    gov_token = user_doc.to_dict()['gov_token']
 
+    if consent:
         db.collection('nft_pendings').document(nft_in_poll.id).update(
-            {'buy_consent_list': firestore.ArrayUnion([telegram_id]),
+            {'consent_list': firestore.ArrayUnion([telegram_id]),
              'consent_token_amount': firestore.Increment(gov_token)})
 
-        if nft_dict['consent_token_amount'] >= nft_dict['buy_limit']:
-            ''' NFT buying web3 solidity code (@Daniel)'''
+        if nft_dict['consent_token_amount'] >= nft_dict['quorum']:
 
-            ''' pending list out, holding/transaction list in '''
-            data_holding = {
+            data_intersection = {
                 'project': nft_dict['project'],
                 'project_address': nft_dict['project_address'],
                 'chain': nft_dict['chain'],
@@ -92,23 +90,36 @@ def pollHandle_flask():
                 'category': nft_dict['category'],
                 'price_buy': nft_dict['price_buy'],
                 'price_est': nft_dict['price_est'],
-                'on_sale': False
             }
-            data_transaction = {
-                'project': nft_dict['project'],
-                'project_address': nft_dict['project_address'],
-                'chain': nft_dict['chain'],
-                'token_id': nft_dict['token_id'],
-                'category': nft_dict['category'],
-                'price_buy': nft_dict['price_buy'],
-                'price_est_when_buy': nft_dict['price_est'],
-                'price_sell': 0,
-                'date_buy': datetime.date.today(),
-                'data_sell': datetime.date(2100, 12, 31)
-            }
-            db.collection('nft_holdings').add(data_holding)
-            db.collection('nft_transactions').add(data_transaction)
-            db.collection('nft_pendings').document(nft_in_poll.id).delete()
+
+            if nft_dict['is_buy_poll']:
+                if not db.collection('public_account').document('public').to_dict()['eth_remain'] >= nft_dict['price_buy']:
+                    return ERROR_RESPONSE
+
+                ''' NFT buying web3 solidity code (@Daniel)'''
+
+                ''' pending list out, holding/transaction list in '''
+                data_holding_unique = {'on_sale': False}
+                data_transaction_unique = {
+                    'price_sell': 0,
+                    'date_buy': datetime.date.today(),
+                    'data_sell': datetime.date(2100, 12, 31)
+                }
+
+                data_holding = data_intersection.copy()
+                data_holding.update(data_holding_unique)
+                data_transaction = data_intersection.copy()
+                data_transaction.update(data_transaction_unique)
+
+                db.collection('nft_holdings').add(data_holding)
+                db.collection('nft_transactions').add(data_transaction)
+                db.collection('nft_pendings').document(nft_in_poll.id).delete()
+            else:
+                ''' NFT selling web3 solidity code (@Daniel)'''
+
+                ''' if selling is done, we have to update DB. '''
+
+
     else:
         db.collection('nft_pendings').document(nft_in_poll.id).update(
             {'buy_reject_list': firestore.ArrayUnion([telegram_id])})
@@ -130,28 +141,26 @@ def pollHandle_flask(request):
 
     poll_id = chat_dict['poll_id']
     telegram_id = chat_dict['user']['id']
-    # 0 means 'buy'
-    buy_consent = (chat_dict['option_ids'][0] == 0)
-
     nft_in_poll = db.collection('nft_pendings').where('poll_id', '==', poll_id).get()
+    nft_dict = nft_in_poll.to_dict()
+
+    # 0 means 'consent'
+    consent = (chat_dict['option_ids'][0] == 0)
 
     if len(nft_in_poll) == 0:
         return ERROR_RESPONSE
 
-    nft_dict = nft_in_poll.to_dict()
-    if buy_consent:
-        user_doc = db.collection('members').where('telegram_id', '==', telegram_id)
-        gov_token = user_doc.to_dict()['gov_token']
+    user_doc = db.collection('members').where('telegram_id', '==', telegram_id)
+    gov_token = user_doc.to_dict()['gov_token']
 
+    if consent:
         db.collection('nft_pendings').document(nft_in_poll.id).update(
-            {'buy_consent_list': firestore.ArrayUnion([telegram_id]),
+            {'consent_list': firestore.ArrayUnion([telegram_id]),
              'consent_token_amount': firestore.Increment(gov_token)})
 
-        if nft_dict['consent_token_amount'] >= nft_dict['buy_limit']:
-            ''' NFT buying web3 solidity code (@Daniel)'''
+        if nft_dict['consent_token_amount'] >= nft_dict['quorum']:
 
-            ''' pending list out, holding/transaction list in '''
-            data_holding = {
+            data_intersection = {
                 'project': nft_dict['project'],
                 'project_address': nft_dict['project_address'],
                 'chain': nft_dict['chain'],
@@ -159,23 +168,36 @@ def pollHandle_flask(request):
                 'category': nft_dict['category'],
                 'price_buy': nft_dict['price_buy'],
                 'price_est': nft_dict['price_est'],
-                'on_sale': False
             }
-            data_transaction = {
-                'project': nft_dict['project'],
-                'project_address': nft_dict['project_address'],
-                'chain': nft_dict['chain'],
-                'token_id': nft_dict['token_id'],
-                'category': nft_dict['category'],
-                'price_buy': nft_dict['price_buy'],
-                'price_est_when_buy': nft_dict['price_est'],
-                'price_sell': 0,
-                'date_buy': datetime.date.today(),
-                'data_sell': datetime.date(2100, 12, 31)
-            }
-            db.collection('nft_holdings').add(data_holding)
-            db.collection('nft_transactions').add(data_transaction)
-            db.collection('nft_pendings').document(nft_in_poll.id).delete()
+
+            if nft_dict['is_buy_poll']:
+                if not db.collection('public_account').document('public').to_dict()['eth_remain'] >= nft_dict['price_buy']:
+                    return ERROR_RESPONSE
+
+                ''' NFT buying web3 solidity code (@Daniel)'''
+
+                ''' pending list out, holding/transaction list in '''
+                data_holding_unique = {'on_sale': False}
+                data_transaction_unique = {
+                    'price_sell': 0,
+                    'date_buy': datetime.date.today(),
+                    'data_sell': datetime.date(2100, 12, 31)
+                }
+
+                data_holding = data_intersection.copy()
+                data_holding.update(data_holding_unique)
+                data_transaction = data_intersection.copy()
+                data_transaction.update(data_transaction_unique)
+
+                db.collection('nft_holdings').add(data_holding)
+                db.collection('nft_transactions').add(data_transaction)
+                db.collection('nft_pendings').document(nft_in_poll.id).delete()
+            else:
+                ''' NFT selling web3 solidity code (@Daniel)'''
+
+                ''' if selling is done, we have to update DB. '''
+
+
     else:
         db.collection('nft_pendings').document(nft_in_poll.id).update(
             {'buy_reject_list': firestore.ArrayUnion([telegram_id])})

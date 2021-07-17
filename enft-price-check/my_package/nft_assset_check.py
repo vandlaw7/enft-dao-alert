@@ -75,9 +75,10 @@ def check_prices(updater, dispatcher):
                     'price_buy': now_price,
                     'price_est': nft_bank_estimate,
                     'consent_token_amount': 0,
-                    'buy_limit': total_gov_token * (1 / 2),
-                    'buy_consent_list': [],
-                    'buy_reject_list': []
+                    'is_buy_poll': True,
+                    'quorum': total_gov_token * (1 / 2),
+                    'consent_list': [],
+                    'reject_list': []
                 }
 
                 poll_id = start_telegram_poll(updater, dispatcher, data)
