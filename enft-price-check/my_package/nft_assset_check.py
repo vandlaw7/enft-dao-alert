@@ -3,17 +3,10 @@ import json
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 import time
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
 
 from my_package.polling_bot import start_telegram_poll, start_fake_poll
-from my_package.global_var import total_gov_token
+from my_package.global_var import total_gov_token, db
 
-# db Setup
-cred = credentials.Certificate("./serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
 
 url = "https://api.nftbank.ai/estimates-v2/dapp/decentraland"
 headers = {'x-api-key': 'b8bb9504e550e732265f08434414b8dd'}
@@ -73,8 +66,6 @@ def check_prices(updater, dispatcher):
             now_price = int(result['orders'][i]['price']) / pow(10, 18)
             if nft_bank_estimate > now_price * 1.1:
                 print("당장 사요!")
-                poll_id = start_telegram_poll(updater, dispatcher, token_id_deland, nft_bank_estimate, now_price)
-
                 data = {
                     'project': 'decentralland',
                     'project_address': decentral_land_contract_id,
@@ -83,10 +74,13 @@ def check_prices(updater, dispatcher):
                     'category': category,
                     'price_buy': now_price,
                     'price_est': nft_bank_estimate,
-                    'poll_id': poll_id, # for telegram
                     'consent_token_amount': 0,
                     'buy_limit': total_gov_token * (1 / 2),
                     'buy_consent_list': [],
                     'buy_reject_list': []
                 }
+
+                poll_id = start_telegram_poll(updater, dispatcher, data)
+
+                data['poll_id'] = poll_id
                 db.collection('nft_pendings').add(data)
