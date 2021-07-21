@@ -19,7 +19,7 @@ data2 = {'name': 'Jane Doe', 'age': 34, 'employed': False}
 data3 = {'name': 'Jane Doe', 'age': 34, 'employed': False}
 # with document reference like below, you can have unique data with unique id.
 # although you run the below code again, there is only one document named 'janedoe'
-# db.collection('persons').document('janedoe').set(data3)  # document reference
+db.collection('persons').document('janedoe').set(data3)  # document reference
 
 # Set documents with auto IDs
 # db.collection('persons').document().set(data3)

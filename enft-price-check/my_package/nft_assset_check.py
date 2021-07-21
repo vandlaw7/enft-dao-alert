@@ -4,9 +4,8 @@ from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 import time
 
-from my_package.polling_bot import start_telegram_poll, start_fake_poll
+from my_package.polling_bot import start_telegram_poll
 from my_package.global_var import total_gov_token, db
-
 
 url = "https://api.nftbank.ai/estimates-v2/dapp/decentraland"
 headers = {'x-api-key': 'b8bb9504e550e732265f08434414b8dd'}
@@ -49,10 +48,11 @@ def get_query(my_string):
 def check_prices(updater, dispatcher):
     query = gql(decentral_land_string)
     result = client.execute(query)
+
+
     print(result)
 
-    # 투표 체크용 가짜
-    start_fake_poll(updater, dispatcher)
+    only_one = True
 
     for i in range(len(result['orders'])):
         print(f'{i}번째 매물')
@@ -61,27 +61,46 @@ def check_prices(updater, dispatcher):
         price_check_url = f'https://api.nftbank.ai/estimates-v2/estimates/{decentral_land_contract_id}/{token_id_deland}?chain_id=ETHEREUM'
         r3 = requests.get(price_check_url, headers=headers)
         estimated_result = json.loads(r3.text)
-        if len(estimated_result['data']) != 0:
+        if estimated_result['data']:
             nft_bank_estimate = int(estimated_result['data'][0]['estimate'][0]['estimate_price'])
             now_price = int(result['orders'][i]['price']) / pow(10, 18)
+            print(nft_bank_estimate)
+            print(now_price)
+
+            data = {
+                'project': 'decentralland',
+                'project_address': decentral_land_contract_id,
+                'chain': 'ethereum',
+                'token_id': token_id_deland,
+                'category': category,
+                'price_buy': now_price,
+                'price_est': nft_bank_estimate,
+                'consent_token_amount': 0,
+                'is_buy_poll': True,
+                'consent_list': [],
+                'reject_list': []
+            }
+
+            if only_one:
+                only_one = False
+                chat_ids = db.collection('global').document('global').get().to_dict()["chat_list"]
+                print(chat_ids)
+                for chat_id in chat_ids:
+                    dao_governance = db.collection('dao').document(str(chat_id)).collection('gov_values').document(
+                        'values').get().to_dict()
+                    data['quorum'] = dao_governance['gov_token_total'] * dao_governance['consent_limit'] / 100
+                    poll_id = start_telegram_poll(updater, dispatcher, data, chat_id)
+                    data['poll_id'] = poll_id
+                    db.collection('dao').document(str(chat_id)).collection('nft_pendings').add(data)
+
             if nft_bank_estimate > now_price * 1.1:
+
                 print("당장 사요!")
-                data = {
-                    'project': 'decentralland',
-                    'project_address': decentral_land_contract_id,
-                    'chain': 'ethereum',
-                    'token_id': token_id_deland,
-                    'category': category,
-                    'price_buy': now_price,
-                    'price_est': nft_bank_estimate,
-                    'consent_token_amount': 0,
-                    'is_buy_poll': True,
-                    'quorum': total_gov_token * (1 / 2),
-                    'consent_list': [],
-                    'reject_list': []
-                }
-
-                poll_id = start_telegram_poll(updater, dispatcher, data)
-
-                data['poll_id'] = poll_id
-                db.collection('nft_pendings').add(data)
+                chat_ids = db.collection('global').document('global').get().to_dict()["chat_list"]
+                for chat_id in chat_ids:
+                    dao_governance = db.collection('dao').document(str(chat_id)).collection('gov_values').document(
+                        'values').get().to_dict()
+                    data['quorum'] = dao_governance['gov_token_total'] * dao_governance['consent_limit'] / 100
+                    poll_id = start_telegram_poll(updater, dispatcher, data, chat_id)
+                    data['poll_id'] = poll_id
+                    db.collection('dao').document(str(chat_id)).collection('nft_pendings').add(data)

@@ -6,8 +6,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-token_jay = '1691123609:AAED96Yb-mhgf84rP_P8vOxpDqG3QxsnY-0'
 token = '1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8'
+nft_scanner_id = 1934759690
+
 chat_id = '-443191914'  # 뿌릴 단톡방 id
 
 webhook_endpoint = 'https://us-central1-enft-project.cloudfunctions.net/pollHandle'
@@ -15,17 +16,21 @@ webhook_endpoint = 'https://us-central1-enft-project.cloudfunctions.net/pollHand
 ''' data에 해당 nft에 대한 정보들을 담아서 보냄 '''
 
 
-def start_telegram_poll(updater, dispatcher, data):
+def start_telegram_poll(updater, dispatcher, data, chat_id):
+    project, token_id, price_est, price_buy = data["project"], data["token_id"], data["price_est"], data["price_buy"]
+    eth_remain = db.collection("public_account").document("public").get().to_dict()["eth_remain"]
+
     if data['is_buy_poll']:
         questions = ["사요", "사지 마요"]
+        print(data)
         underrated_ratio = round(100 * (data['price_est'] - data['price_buy']) / data['price_est'], 2)
+
         message = updater.bot.send_poll(
             chat_id,
-            f'{data["project"]} 토큰 아이디 {data["token_id"]}번 NFT {underrated_ratio}%만큼 저평가돼 있습니다. '
-            f'NFT bank의 가치 추정치는 {data["price_est"]} ETH이고, '
-            f'현재 매도 호가는 {data["price_buy"]} ETH입니다.'
-            f'한편, DAO 공동계좌가 보유하고 있는 잔여 ETH는 '
-            f'{db.collection("public_account").document("public").get().to_dict()["eth_remain"]}입니다.  '
+            f'{project} 토큰 아이디 {token_id}번 NFT {underrated_ratio}%만큼 저평가돼 있습니다. '
+            f'NFT bank의 가치 추정치는 {price_est} ETH이고, '
+            f'현재 매도 호가는 {price_buy} ETH입니다.'
+            f'한편, DAO 공동계좌가 보유하고 있는 잔여 ETH는 {eth_remain}입니다.'
             f'구매 여부를 투표해주세요.',
             questions,
             is_anonymous=False
