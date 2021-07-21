@@ -59,4 +59,4 @@ dao_update = {'chat_room_id': -557391640,
                             'gov_token_total': 12000, 'consent_limit': 50}
              }
 
-requests.post('http://127.0.0.1:5000/daoSetting/', json=dao_start2)
+# requests.post('http://127.0.0.1:5000/daoSetting/', json=dao_start2)

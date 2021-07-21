@@ -60,8 +60,8 @@ def enftAlert_local():
     return OK_RESPONSE
 
 
-@app.route('/', methods=['GET', 'POST'])
-def pollHandle_flask():
+# @app.route('/', methods=['GET', 'POST'])
+def pollHandle(request):
     """ Runs the Telegram webhook """
 
     data = json.loads(request.data)
@@ -81,7 +81,7 @@ def pollHandle_flask():
 
     poll_id = chat_dict['poll_id']
     telegram_id = chat_dict['user']['id']
-    nft_in_poll = db.collection('nft_pendings').where('poll_id', '==', poll_id).get()
+    nft_in_poll = db.collection('nft_pendings').where('poll_id', '==', poll_id).get()[0]
     nft_dict = nft_in_poll.to_dict()
 
     # 0 means 'consent'
@@ -146,7 +146,7 @@ def pollHandle_flask():
     return OK_RESPONSE
 
 
-@app.route('/daoSetting/', methods=['GET', 'POST'])
+# @app.route('/daoSetting/', methods=['GET', 'POST'])
 def daoSetting():
     '''
     below is input data example
@@ -172,6 +172,6 @@ def daoSetting():
     return OK_RESPONSE
 
 
-if __name__ == '__main__':
-    enftAlert_local()
-    app.run()
+# if __name__ == '__main__':
+#     enftAlert_local()
+#     app.run()
