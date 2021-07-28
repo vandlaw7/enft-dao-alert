@@ -5,10 +5,10 @@
 
   +  start_telegram_poll(updater, dispatcher, data, chat_id)
   
-    1. Check whether the gap satisfies a (predefined) certain condition for a trade such as purchase (or sale) by comparing the specific NFT price and the estimated price by NFT Bank.
-    2. Specify how much undervalued (or depreciated) the NFT is through telegram bot if that condition is satisfied.
+      1. Check whether the gap satisfies a (predefined) certain condition for a trade such as purchase (or sale) by comparing the specific NFT price and the estimated price by NFT Bank.
+      2. Specify how much undervalued (or depreciated) the NFT is through telegram bot if that condition is satisfied.
     
-    3. Inform the remaining ETH investment in the current DAO, and Initiate a vote on whether to buy (or sell, in the case of NFTs DAO already has)
+      3. Inform the remaining ETH investment in the current DAO, and Initiate a vote on whether to buy (or sell, in the case of NFTs DAO already has)
     
     
     <br>
