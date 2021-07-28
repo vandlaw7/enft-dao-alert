@@ -11,7 +11,7 @@
       3. Inform the remaining ETH investment in the current DAO, and Initiate a vote on whether to buy (or sell, in the case of NFTs DAO already has)
     
     
-    <br>
-    <h4>Voting Example in Telegram</h4>
-    <img src="https://github.com/vandlaw7/enft-dao-alert/blob/master/for-readme/capture_polling_bot.jpg" width="250">
+       <br>
+       <h4>Voting Example in Telegram</h4>
+       <img src="https://github.com/vandlaw7/enft-dao-alert/blob/master/for-readme/capture_polling_bot.jpg" width="250">
   
