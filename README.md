@@ -15,7 +15,7 @@ Every noon, A GCP scheduler calls enftAlert function in main.py.
       if that condition is satisfied.
       3. The poll message also informs the remaining ETH investment in the current DAO, and Initiate a vote on whether to buy 
       (or sell, in the case of NFTs DAO already has)
-      4. Poll answers ale handled by pollHandle function in main.py using webhook.
+      4. Poll answers are handled by pollHandle function in main.py using webhook.
     
     
        <br>
@@ -47,7 +47,7 @@ Every noon, A GCP scheduler calls enftAlert function in main.py.
       
       
 ## main.py
-+ Purpose : In main.py we call the functions explained above, 
++ Purpose : In main.py we use the functions explained above, 
     and handle the poll answers and accept requests about DAO register 
     and governance variables adjustment.
 + Function :

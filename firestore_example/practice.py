@@ -14,7 +14,7 @@ data_two = {'category': 'parcel', 'chain': 'ethereum'}
 # db.collection(chat_room_id).document('public_account').set(data_send)
 # db.collection(chat_room_id).document('nft_pendings').collections('123').set('data_two')
 
-db.collection('dao').document(str(chat_room_id)).set(data_send)
+# db.collection('dao').document(str(chat_room_id)).set(data_send)
 # db.collection('dao').document(chat_room_id).collection('nft_pendings').add(data_two)
 
 abc = {'update_id': 861595762,
@@ -51,7 +51,7 @@ dao_start2 = {'chat_room_id': 98765,
                             'gov_token_total': 12000, 'consent_limit': 50}
              }
 
-dao_update = {'chat_room_id': -557391640,
+dao_update = {'chat_room_id': -443191914,
               'eth_account': 'aaaaaaaa',
               'gov_distribution': {'1': 3000, '2': 4000, '3': 5000},
              'gov_values': {'underrating_ratio': 10, 'buy_limit_ratio': 50,
@@ -59,4 +59,12 @@ dao_update = {'chat_room_id': -557391640,
                             'gov_token_total': 12000, 'consent_limit': 50}
              }
 
-# requests.post('http://127.0.0.1:5000/daoSetting/', json=dao_start2)
+
+poll_ans = {'update_id': 861595762,
+       'poll_answer':
+           {'poll_id': '6310048449567916050',
+            'user': {'id': 1, 'is_bot': False, 'first_name': 'Changwoo', 'last_name': 'Nam',
+                     'username': 'vandlaw'},
+            'option_ids': [0]}}
+
+requests.post('http://127.0.0.1:5000/', json=poll_ans)
