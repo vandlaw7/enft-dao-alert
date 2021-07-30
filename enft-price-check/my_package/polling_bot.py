@@ -18,11 +18,11 @@ webhook_endpoint = 'https://us-central1-enft-project.cloudfunctions.net/pollHand
 
 def start_telegram_poll(updater, dispatcher, data, chat_id):
     project, token_id, price_est, price_buy = data["project"], data["token_id"], data["price_est"], data["price_buy"]
-    eth_remain = db.collection("public_account").document("public").get().to_dict()["eth_remain"]
+    eth_remain = db.collection('dao').document(chat_id).get().to_dict()['eth_remain']
 
     if data['is_buy_poll']:
         questions = ["사요", "사지 마요"]
-        print(data)
+        print('is_buy_poll')
         underrated_ratio = round(100 * (data['price_est'] - data['price_buy']) / data['price_est'], 2)
 
         message = updater.bot.send_poll(

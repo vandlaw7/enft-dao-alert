@@ -1,5 +1,6 @@
 from telegram.ext import Updater
 
+from my_package.nft_holdings_update import update_est_prices
 from my_package.polling_bot import token, nft_scanner_id
 from my_package.nft_assset_check import check_prices
 
@@ -36,6 +37,8 @@ def enftAlert(request):
     dispatcher = updater.dispatcher
 
     check_prices(updater, dispatcher)
+    # now for debug
+    # update_est_prices(updater, dispatcher)
 
     # to fix telegram bug, which frequently resets the webhook address
     requests.get(
@@ -52,6 +55,8 @@ def enftAlert_local():
     dispatcher = updater.dispatcher
 
     check_prices(updater, dispatcher)
+    # now for debug
+    # update_est_prices(updater, dispatcher)
 
     # to fix telegram bug, which frequently resets the webhook address
     requests.get(
@@ -60,8 +65,8 @@ def enftAlert_local():
     return OK_RESPONSE
 
 
-# @app.route('/', methods=['GET', 'POST'])
-def pollHandle(request):
+@app.route('/', methods=['GET', 'POST'])
+def pollHandle():
     """ Runs the Telegram webhook """
 
     data = json.loads(request.data)
@@ -79,19 +84,19 @@ def pollHandle(request):
 
     chat_dict = json.loads(request.data)['poll_answer']
 
-    poll_id = chat_dict['poll_id']
+    poll_id = str(chat_dict['poll_id'])
     telegram_id = chat_dict['user']['id']
-    nft_in_poll = db.collection('nft_pendings').where('poll_id', '==', poll_id).get()[0]
+    dao_id = db.collection('global').document('poll_index').get().to_dict()[poll_id]
+    nft_in_poll = db.collection('dao').document(dao_id).collections('nft_pendings')\
+        .where('poll_id', '==', poll_id).get()[0]
     nft_dict = nft_in_poll.to_dict()
 
     # 0 means 'consent'
     consent = (chat_dict['option_ids'][0] == 0)
 
-    if len(nft_in_poll) == 0:
-        return ERROR_RESPONSE
-
-    user_doc = db.collection('members').where('telegram_id', '==', telegram_id)
-    gov_token = user_doc.to_dict()['gov_token']
+    gov_distribution = db.collection('dao').document(telegram_id).collection('gov_distribution').document(
+        'distribution').get().to_dict()
+    gov_token = gov_distribution['gov_token']
 
     if consent:
         db.collection('nft_pendings').document(nft_in_poll.id).update(
@@ -146,7 +151,7 @@ def pollHandle(request):
     return OK_RESPONSE
 
 
-# @app.route('/daoSetting/', methods=['GET', 'POST'])
+@app.route('/daoSetting/', methods=['GET', 'POST'])
 def daoSetting():
     '''
     below is input data example
@@ -172,6 +177,6 @@ def daoSetting():
     return OK_RESPONSE
 
 
-# if __name__ == '__main__':
-#     enftAlert_local()
-#     app.run()
+if __name__ == '__main__':
+    enftAlert_local()
+    app.run()

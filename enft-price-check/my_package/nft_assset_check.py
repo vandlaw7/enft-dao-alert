@@ -4,8 +4,10 @@ from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 import time
 
+from firebase_admin import firestore
+
 from my_package.polling_bot import start_telegram_poll
-from my_package.global_var import total_gov_token, db
+from my_package.global_var import db
 
 url = "https://api.nftbank.ai/estimates-v2/dapp/decentraland"
 headers = {'x-api-key': 'b8bb9504e550e732265f08434414b8dd'}
@@ -49,16 +51,14 @@ def check_prices(updater, dispatcher):
     query = gql(decentral_land_string)
     result = client.execute(query)
 
-
-    print(result)
-
     only_one = True
 
     for i in range(len(result['orders'])):
         print(f'{i}번째 매물')
         token_id_deland = result['orders'][i]['tokenId']
         category = result['orders'][i]['category']
-        price_check_url = f'https://api.nftbank.ai/estimates-v2/estimates/{decentral_land_contract_id}/{token_id_deland}?chain_id=ETHEREUM'
+        price_check_url = f'https://api.nftbank.ai/estimates-v2/estimates/' \
+                          f'{decentral_land_contract_id}/{token_id_deland}?chain_id=ETHEREUM'
         r3 = requests.get(price_check_url, headers=headers)
         estimated_result = json.loads(r3.text)
         if estimated_result['data']:
@@ -92,6 +92,7 @@ def check_prices(updater, dispatcher):
                     poll_id = start_telegram_poll(updater, dispatcher, data, chat_id)
                     data['poll_id'] = poll_id
                     db.collection('dao').document(str(chat_id)).collection('nft_pendings').add(data)
+                    db.collection('global').document('global').update({'poll_list': firestore.ArrayUnion([poll_id])})
 
             if nft_bank_estimate > now_price * 1.1:
 
@@ -104,3 +105,4 @@ def check_prices(updater, dispatcher):
                     poll_id = start_telegram_poll(updater, dispatcher, data, chat_id)
                     data['poll_id'] = poll_id
                     db.collection('dao').document(str(chat_id)).collection('nft_pendings').add(data)
+                    db.collection('global').document('global').update({'poll_list': firestore.ArrayUnion([poll_id])})
