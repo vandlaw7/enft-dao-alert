@@ -59,8 +59,11 @@ def enftAlert_local():
     # update_est_prices(updater, dispatcher)
 
     # to fix telegram bug, which frequently resets the webhook address
+    # drop_pending_updates=True option is for handling infinite request errors.
     requests.get(
-        'https://api.telegram.org/bot1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8/setWebhook?url=https://us-central1-enft-project.cloudfunctions.net/pollHandle')
+        'https://api.telegram.org/bot1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8/setWebhook'
+        '?url=https://us-central1-enft-project.cloudfunctions.net/pollHandle'
+        '&drop_pending_updates=True')
 
     return OK_RESPONSE
 
@@ -186,10 +189,9 @@ def daoSetting():
     else:
         if gov_distribution is not None:
             db.collection('dao').document(chat_room_id).collection('gov_distribution').document('distribution').update(
-            gov_distribution)
+                gov_distribution)
         if gov_values is not None:
             db.collection('dao').document(chat_room_id).collection('gov_values').document('values').update(gov_values)
-
 
     return OK_RESPONSE
 
