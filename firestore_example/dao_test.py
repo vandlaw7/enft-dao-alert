@@ -2,6 +2,8 @@ import firebase_admin
 import requests
 from firebase_admin import credentials, firestore
 
+import datetime
+
 cred = credentials.Certificate("../enft-price-check/serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 
@@ -36,35 +38,25 @@ wow = {'update_id': 861595838,
                                        'username': 'NFTscannerbot'}, 'new_chat_members': [
                {'id': 1934759690, 'is_bot': True, 'first_name': 'NFTscanner', 'username': 'NFTscannerbot'}]}}
 
-dao_start = {'chat_room_id': -557391640,
-             'eth_account': 'aaaaaaaa',
+dao_start = {'chat_room_id': -12345,
+             'eth_address': 'aaaaaaaa',
              'gov_distribution': {'1': 3000, '2': 4000, '3': 3000},
-             'gov_values': {'underrating_ratio': 10, 'buy_limit_ratio': 50,
-                            'price_collapse_ratio': 30, 'index_weight': 50}
+             'gov_values': {'underrating_ratio': 10, 'consent_limit': 50,
+                            'price_collapse_ratio': 30, 'index_weight': 50,
+                            'gov_token_total': 10000}
              }
 
 dao_start2 = {'chat_room_id': 98765,
-             'eth_account': 'bbbbbb',
-             'gov_distribution': {'1': 3000, '2': 4000, '3': 3000},
-             'gov_values': {'underrating_ratio': 10, 'buy_limit_ratio': 50,
-                            'price_collapse_ratio': 30, 'index_weight': 50,
-                            'gov_token_total': 12000, 'consent_limit': 50}
-             }
+              'eth_account': 'bbbbbb',
+              'gov_distribution': {'1': 3000, '2': 4000, '3': 3000},
+              'gov_values': {'underrating_ratio': 10, 'buy_limit_ratio': 50,
+                             'price_collapse_ratio': 30, 'index_weight': 50,
+                             'gov_token_total': 12000, 'consent_limit': 50}
+              }
 
-dao_update = {'chat_room_id': -443191914,
-              'eth_account': 'aaaaaaaa',
-              'gov_distribution': {'1': 3000, '2': 4000, '3': 5000},
-             'gov_values': {'underrating_ratio': 10, 'buy_limit_ratio': 50,
-                            'price_collapse_ratio': 30, 'index_weight': 50,
-                            'gov_token_total': 12000, 'consent_limit': 50}
-             }
+dao_update = {'chat_room_id': -12345,
+              # 'gov_distribution': {'1': 3000, '2': 4000, '3': 3000},
+              'gov_values': {'underrating_ratio': 30, 'consent_limit': 55}
+              }
 
-
-poll_ans = {'update_id': 861595762,
-       'poll_answer':
-           {'poll_id': '6310048449567916050',
-            'user': {'id': 1, 'is_bot': False, 'first_name': 'Changwoo', 'last_name': 'Nam',
-                     'username': 'vandlaw'},
-            'option_ids': [0]}}
-
-requests.post('http://127.0.0.1:5000/', json=poll_ans)
+requests.post('http://127.0.0.1:5000/daoSetting/', json=dao_update)

@@ -106,3 +106,4 @@ def check_prices(updater, dispatcher):
                     data['poll_id'] = poll_id
                     db.collection('dao').document(str(chat_id)).collection('nft_pendings').add(data)
                     db.collection('global').document('global').update({'poll_list': firestore.ArrayUnion([poll_id])})
+                    db.collection('global').document('poll_index').update({str(poll_id): chat_id})
