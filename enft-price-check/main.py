@@ -1,7 +1,7 @@
 from telegram.ext import Updater
 
 from my_package.nft_holdings_update import update_est_prices
-from my_package.polling_bot import token, nft_scanner_id
+from my_package.polling_bot import token, nft_scanner_id, start_telegram_poll
 from my_package.nft_assset_check import check_prices
 
 import json
@@ -42,12 +42,11 @@ def enftAlert(request):
 
     # to fix telegram bug, which frequently resets the webhook address
     requests.get(
-        'https://api.telegram.org/bot1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8/setWebhook?url=https://us-central1-enft-project.cloudfunctions.net/pollHandle')
+        'https://api.telegram.org/bot1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8/setWebhook'
+        '?url=https://us-central1-enft-project.cloudfunctions.net/pollHandle'
+        '&drop_pending_updates=True')
 
     return OK_RESPONSE
-
-
-app = Flask(__name__)
 
 
 def enftAlert_local():
@@ -68,6 +67,7 @@ def enftAlert_local():
     return OK_RESPONSE
 
 
+app = Flask(__name__)
 @app.route('/', methods=['GET', 'POST'])
 def pollHandle():
     """ Runs the Telegram webhook """
@@ -75,47 +75,88 @@ def pollHandle():
     data = json.loads(request.data)
     print(data)
 
-    if not 'poll_answer' in data:
+    # drop_pending_updates=True option is for handling infinite request errors.
+    requests.get(
+        'https://api.telegram.org/bot1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8/setWebhook'
+        '?url=https://us-central1-enft-project.cloudfunctions.net/pollHandle'
+        '&drop_pending_updates=True')
+
+
+
+    '''Below is request.data example form telegram message
+    {'update_id': 861596019, 'message': {'message_id': 111,
+                                         'from': {'id': 1743100030, 'is_bot': False, 'first_name': 'Changwoo',
+                                                  'last_name': 'Nam', 'username': 'vandlaw', 'language_code': 'ko'},
+                                         'chat': {'id': -557391640, 'title': '0721', 'type': 'group',
+                                                  'all_members_are_administrators': True}, 'date': 1628310209,
+                                         'text': 'Dddd'}}'''
+
+    if 'message' in data:
+        message_dict = data['message']
+        chat_id = message_dict["chat"]["id"]
+        if message_dict["text"] == '/chatid':
+            sending_message = f'Chat id of this group chat is {chat_id}. Chat id must have minus sign.'
+            requests.get(
+                f'https://api.telegram.org/bot1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8/sendMessage'
+                f'?chat_id={chat_id}&text={sending_message}')
+        elif message_dict["text"] == '/userid':
+            user_id = message_dict["from"]["id"]
+            sending_message = f'Your telegram user_id is {user_id}'
+            requests.get(
+                f'https://api.telegram.org/bot1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8/sendMessage'
+                f'?chat_id={chat_id}&text={sending_message}')
+
         return OK_RESPONSE
 
-    ''' below is request.data example form telegram poll answer
-       {'update_id': 861595762, 
-       'poll_answer': 
-       {'poll_id': '6310048449567916050', 
-       'user': {'id': 1743100030, 'is_bot': False, 'first_name': 'Changwoo', 'last_name': 'Nam', 'username': 'vandlaw'}, 
-       'option_ids': [1]}}'''
+    if not 'poll_answer' in data:
+        print("투표 응답이 아님")
+        return OK_RESPONSE
 
-    chat_dict = json.loads(request.data)['poll_answer']
+    ''' Below is request.data example form telegram poll answer
+       {'update_id': 861595762, 
+       'poll_answer': {'poll_id': '6310048449567916050', 
+                       'user': {'id': 1743100030, 'is_bot': False, 'first_name': 'Changwoo', 'last_name': 'Nam', 'username': 'vandlaw'}, 
+                       'option_ids': [1]}}'''
+
+    chat_dict = data['poll_answer']
+
+    if not chat_dict['option_ids']:
+        print("투표 취소")
+        return OK_RESPONSE
 
     poll_id = str(chat_dict['poll_id'])
     telegram_id = str(chat_dict['user']['id'])
-    dao_id = db.collection('global').document('poll_index').get().to_dict()[poll_id]
-
-    nft_in_poll = db.collection('dao').document(dao_id).collection('nft_pendings') \
-        .where('poll_id', '==', poll_id).get()[0]
-    nft_dict = nft_in_poll.to_dict()
+    dao_id = db.collection('global').document('poll_index').get().to_dict().get(poll_id)
+    if dao_id:
+        nft_in_poll = \
+            db.collection('dao').document(dao_id).collection('nft_pendings').where('poll_id', '==', poll_id).get()[0]
+        nft_dict = nft_in_poll.to_dict()
+    else:
+        print("이미 팔려서 리스트에서 지워진 NFT입니다.")
+        return OK_RESPONSE
 
     # 0 means 'consent'
     consent = (chat_dict['option_ids'][0] == 0)
 
     gov_distribution = db.collection('dao').document(dao_id).collection('gov_distribution').document(
         'distribution').get().to_dict()
-    print("gov_distribution")
-    print(gov_distribution)
-    gov_token = gov_distribution[telegram_id]
+
+    gov_token = gov_distribution.get(telegram_id)
+    # 이 DAO 에 등록되지 않은 유저가 투표를 한 경우
+    if not gov_token:
+        sending_message = f'telegram id {telegram_id} user is not enrolled in DAO. This answer is invalidate.'
+        requests.get(
+            f'https://api.telegram.org/bot1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8/sendMessage'
+            f'?chat_id={dao_id}&text={sending_message}')
+
+        return OK_RESPONSE
 
     if consent:
         db.collection('dao').document(dao_id).collection('nft_pendings').document(nft_in_poll.id).update(
             {'consent_list': firestore.ArrayUnion([telegram_id]),
              'consent_token_amount': firestore.Increment(gov_token)})
 
-        print("구입 조건 판별")
-        print(nft_dict['quorum'])
-        print(nft_dict['consent_token_amount'])
-        print(gov_token)
-
         if nft_dict['consent_token_amount'] + gov_token >= nft_dict['quorum']:
-            print("조건 통과함!")
             data_intersection = {
                 'project': nft_dict['project'],
                 'project_address': nft_dict['project_address'],
@@ -149,6 +190,27 @@ def pollHandle():
                 db.collection('dao').document(dao_id).collection('nft_holdings').document().set(data_holding)
                 db.collection('dao').document(dao_id).collection('nft_transactions').document().set(data_transaction)
                 db.collection('dao').document(dao_id).collection('nft_pendings').document(nft_in_poll.id).delete()
+
+                # 다른 DAO에게 이제 이 NFT를 구입할 수 없게 되었다는 것을 알리고, 우리 서비스 DB도 수정해준다.
+                db.collection('global').document('poll_index').update({poll_id: firestore.DELETE_FIELD})
+                chat_ids = db.collection('global').document('global').get().to_dict()["chat_list"]
+
+                for chat_id in chat_ids:
+                    nft_sold = db.collection('dao').document(chat_id).collection('nft_pendings') \
+                        .where("token_id", '==', nft_dict['token_id']).get()
+
+                    # 어차피 하나지만 firestore where 문법의 특성상 list 형태로 리턴되므로 그냥 이런 형식을 취해준다.
+                    # list가 없으면 그냥 지나칠 때니 여러모로 편하다.
+                    for nft in nft_sold:
+                        key = nft.id
+                        db.collection('dao').document(chat_id).collection('nft_pendings').document(key).delete()
+
+                        sending_message = f'{data_intersection["project"]} token id {data_intersection["token_id"]}번 ' \
+                                          f'NFT가 다른 사용자에 의 판매되었습니다. 해당 NFT에 대한해 구매 투표는 무효 처리됩니다. '
+                        requests.get(
+                            f'https://api.telegram.org/bot1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8/sendMessage'
+                            f'?chat_id={chat_id}&text={sending_message}')
+
             else:
                 ''' NFT selling web3 solidity code (@Daniel)'''
 
@@ -156,13 +218,13 @@ def pollHandle():
 
 
     else:
-        db.collection('nft_pendings').document(nft_in_poll.id).update(
+        db.collection('dao').document(dao_id).collection('nft_pendings').document(nft_in_poll.id).update(
             {'buy_reject_list': firestore.ArrayUnion([telegram_id])})
 
     return OK_RESPONSE
 
 
-@app.route('/daoSetting/', methods=['GET', 'POST'])
+# @app.route('/daoSetting/', methods=['GET', 'POST'])
 def daoSetting():
     '''
     below is input data example
@@ -179,7 +241,7 @@ def daoSetting():
         "eth_address"), data.get('gov_distribution'), data.get('gov_values')
 
     # create mode
-    if not db.collection('dao').document(chat_room_id).get().exists:
+    if not db.collection('dao').document(chat_room_id).get():
         db.collection('dao').document(chat_room_id).set({'eth_address': eth_address})
         db.collection('global').document('global').update({'chat_list': firestore.ArrayUnion([chat_room_id])})
         db.collection('dao').document(chat_room_id).collection('gov_distribution').document('distribution').set(

@@ -22,7 +22,7 @@ def start_telegram_poll(updater, dispatcher, data, chat_id):
 
     if data['is_buy_poll']:
         questions = ["사요", "사지 마요"]
-        print('is_buy_poll')
+        print('is_buy_poll', chat_id)
         underrated_ratio = round(100 * (data['price_est'] - data['price_buy']) / data['price_est'], 2)
 
         message = updater.bot.send_poll(
@@ -35,6 +35,8 @@ def start_telegram_poll(updater, dispatcher, data, chat_id):
             questions,
             is_anonymous=False
         )
+        print("start telegram poll message")
+        print(message)
     else:
         questions = ["팔아요", "팔지 마요"]
         mdd = round(100 * (data['price_high'] - data['price_est']) / data['price_high'], 2)
@@ -46,6 +48,7 @@ def start_telegram_poll(updater, dispatcher, data, chat_id):
             questions,
             is_anonymous=False
         )
+
 
     payload = {
         message.poll.id: {
