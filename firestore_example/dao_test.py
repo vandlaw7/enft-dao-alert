@@ -116,3 +116,16 @@ qqq = {'update_id': 861595762,
 requests.post('http://127.0.0.1:5000/', json=qqq)
 
 
+def test_sell_poll():
+    holding_data = {
+        'project': "decentralland",
+        'project_address': "aaa",
+        'chain': "ethereum",
+        "token_id": "11111111",
+        'category': "parcel",
+        'price_buy': 1000,
+        'price_est': 1300,
+        'on_sale': False
+    }
+    db.collection('dao').document(chat_room_id).collection('nft_holdings').add(holding_data)
+
