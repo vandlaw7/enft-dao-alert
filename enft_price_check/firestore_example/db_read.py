@@ -9,7 +9,7 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 # getting a document with a known ID
-result = db.collection('persons').document('p1').get()
+result = db.collection('global').document('global').get()
 if result.exists:
     print(result.to_dict())
 

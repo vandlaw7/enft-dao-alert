@@ -1,13 +1,13 @@
-import requests
 import json
-from gql import gql, Client
-from gql.transport.requests import RequestsHTTPTransport
 import time
 
+import requests
 from firebase_admin import firestore
+from gql import gql, Client
+from gql.transport.requests import RequestsHTTPTransport
 
-from my_package.polling_bot import start_telegram_poll
 from my_package.global_var import db
+from my_package.polling_bot import start_telegram_poll
 
 url = "https://api.nftbank.ai/estimates-v2/dapp/decentraland"
 headers = {'x-api-key': 'b8bb9504e550e732265f08434414b8dd'}
