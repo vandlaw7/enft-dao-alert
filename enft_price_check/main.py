@@ -48,28 +48,28 @@ def enftAlert(request):
     return OK_RESPONSE
 
 
-def enftAlert_local():
-    updater = Updater(token=token)
-    dispatcher = updater.dispatcher
+# def enftAlert_local():
+#     updater = Updater(token=token)
+#     dispatcher = updater.dispatcher
 
-    check_prices(updater, dispatcher)
-    update_price_estimations(updater, dispatcher)
+#     check_prices(updater, dispatcher)
+#     update_price_estimations(updater, dispatcher)
 
-    # to fix telegram bug, which frequently resets the webhook address
-    # drop_pending_updates=True option is for handling infinite request errors.
-    requests.get(
-        'https://api.telegram.org/bot1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8/setWebhook'
-        '?url=https://us-central1-enft-project.cloudfunctions.net/pollHandle'
-        '&drop_pending_updates=True')
+#     # to fix telegram bug, which frequently resets the webhook address
+#     # drop_pending_updates=True option is for handling infinite request errors.
+#     requests.get(
+#         'https://api.telegram.org/bot1934759690:AAEGnScdQXVXg5uzNmPJuF6aSjeflYgF2Y8/setWebhook'
+#         '?url=https://us-central1-enft-project.cloudfunctions.net/pollHandle'
+#         '&drop_pending_updates=True')
 
-    return OK_RESPONSE
+#     return OK_RESPONSE
 
 
-app = Flask(__name__)
+app = Flask("internal")
 CORS(app)
 
 
-@app.route('/', methods=['GET', 'POST'])
+# @app.route('/', methods=['GET', 'POST'])
 def pollHandle(request):
     """ Runs the Telegram webhook """
 
@@ -110,7 +110,8 @@ def pollHandle(request):
 
     poll_id = str(chat_dict['poll_id'])
     telegram_id = str(chat_dict['user']['id'])
-    dao_id = db.collection('global').document('poll_index').get().to_dict().get(poll_id)
+    dao_id = db.collection('global').document(
+        'poll_index').get().to_dict().get(poll_id)
     if dao_id:
         nft_in_poll_raw = db.collection('dao').document(dao_id).collection('nft_pendings').where('poll_id', '==',
                                                                                                  poll_id).get()
@@ -183,9 +184,12 @@ def pollHandle(request):
                 data_transaction = data_intersection.copy()
                 data_transaction.update(data_transaction_unique)
 
-                db.collection('dao').document(dao_id).collection('nft_holdings').document().set(data_holding)
-                db.collection('dao').document(dao_id).collection('nft_transactions').document().set(data_transaction)
-                db.collection('dao').document(dao_id).collection('nft_pendings').document(nft_in_poll.id).delete()
+                db.collection('dao').document(dao_id).collection(
+                    'nft_holdings').document().set(data_holding)
+                db.collection('dao').document(dao_id).collection(
+                    'nft_transactions').document().set(data_transaction)
+                db.collection('dao').document(dao_id).collection(
+                    'nft_pendings').document(nft_in_poll.id).delete()
 
                 db.collection('dao').document(dao_id).update(
                     {'eth_remain': firestore.Increment(-1 * nft_dict['price_buy'])})
@@ -197,8 +201,10 @@ def pollHandle(request):
                     f'?chat_id={dao_id}&text={sending_message}')
 
                 # 다른 DAO에게 이제 이 NFT를 구입할 수 없게 되었다는 것을 알리고, 우리 서비스 DB도 수정해준다.
-                db.collection('global').document('poll_index').update({poll_id: firestore.DELETE_FIELD})
-                chat_ids = db.collection('global').document('global').get().to_dict()["chat_list"]
+                db.collection('global').document('poll_index').update(
+                    {poll_id: firestore.DELETE_FIELD})
+                chat_ids = db.collection('global').document(
+                    'global').get().to_dict()["chat_list"]
 
                 for chat_id in chat_ids:
                     nft_sold = db.collection('dao').document(chat_id).collection('nft_pendings') \
@@ -209,7 +215,8 @@ def pollHandle(request):
                     for nft in nft_sold:
                         if nft.to_dict()["project"] == nft_dict['project']:
                             key = nft.id
-                            db.collection('dao').document(chat_id).collection('nft_pendings').document(key).delete()
+                            db.collection('dao').document(chat_id).collection(
+                                'nft_pendings').document(key).delete()
 
                             sending_message = f'{data_intersection["project"]} token id {data_intersection["token_id"]} ' \
                                               f'NFT is sold by other user. Polling about  '
@@ -230,7 +237,6 @@ def pollHandle(request):
                             {'on_sale': True})
 
                 ''' if selling is done, we have to update DB. '''
-
 
     else:
         db.collection('dao').document(dao_id).collection('nft_pendings').document(nft_in_poll.id).update(
@@ -264,11 +270,14 @@ def daoSetting(request):
     # create mode
     if not db.collection('dao').document(chat_room_id).get().exists:
 
-        db.collection('dao').document(chat_room_id).set({'eth_address': eth_address})
-        db.collection('global').document('global').update({'chat_list': firestore.ArrayUnion([chat_room_id])})
+        db.collection('dao').document(chat_room_id).set(
+            {'eth_address': eth_address})
+        db.collection('global').document('global').update(
+            {'chat_list': firestore.ArrayUnion([chat_room_id])})
         db.collection('dao').document(chat_room_id).collection('gov_distribution').document('distribution').set(
             gov_distribution)
-        db.collection('dao').document(chat_room_id).collection('gov_values').document('values').set(gov_values)
+        db.collection('dao').document(chat_room_id).collection(
+            'gov_values').document('values').set(gov_values)
 
     # update mode
     else:
@@ -276,19 +285,21 @@ def daoSetting(request):
             db.collection('dao').document(chat_room_id).collection('gov_distribution').document('distribution').update(
                 gov_distribution)
         if gov_values is not None:
-            db.collection('dao').document(chat_room_id).collection('gov_values').document('values').update(gov_values)
+            db.collection('dao').document(chat_room_id).collection(
+                'gov_values').document('values').update(gov_values)
 
     return OK_RESPONSE
 
 
-@app.route('/daoDetail/', methods=['GET', 'POST'])
+# @app.route('/daoDetail/', methods=['GET', 'POST'])
 def daoDetail():
     data = json.loads(request.data)
 
     print(data)
 
     chat_room_id = str(data.get("chat_room_id"))
-    nft_holdings = db.collection('dao').document(chat_room_id).collection('nft_holdings').get()
+    nft_holdings = db.collection('dao').document(
+        chat_room_id).collection('nft_holdings').get()
 
     estimated_value = 0
     invested_value = 0
@@ -297,7 +308,8 @@ def daoDetail():
         # print(nft_dict)
         estimated_value += nft_dict['price_high']
         invested_value += nft_dict['price_buy']
-    remained_balance = db.collection('dao').document(chat_room_id).get().to_dict()['eth_remain']
+    remained_balance = db.collection('dao').document(
+        chat_room_id).get().to_dict()['eth_remain']
 
     # my_res = flask.Response()
     #
@@ -310,6 +322,33 @@ def daoDetail():
     }
 
 
-if __name__ == '__main__':
-    # enftAlert_local()
-    app.run()
+# if __name__ == '__main__':
+#     # enftAlert_local()
+#     app.run()
+
+# Define the internal path, idiomatic Flask definition
+@app.route('/user/<string:id>', methods=['GET', 'POST'])
+def users(id):
+    print(id)
+    return id, 200
+
+
+def main(request):
+    # Create a new app context for the internal app
+    internal_ctx = app.test_request_context(path=request.full_path,
+                                            method=request.method)
+
+    # Copy main request data from original request
+    # According to your context, parts can be missing. Adapt here!
+    internal_ctx.request.data = request.data
+    internal_ctx.request.headers = request.headers
+
+    # Activate the context
+    internal_ctx.push()
+    # Dispatch the request to the internal app and get the result
+    return_value = app.full_dispatch_request()
+    # Offload the context
+    internal_ctx.pop()
+
+    # Return the result of the internal app routing and processing
+    return return_value
