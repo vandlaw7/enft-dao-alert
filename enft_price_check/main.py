@@ -290,16 +290,20 @@ def daoSetting(request):
 
     return OK_RESPONSE
 
+# Define the internal path, idiomatic Flask definition
 
-# @app.route('/daoDetail/', methods=['GET', 'POST'])
-def daoDetail():
-    data = json.loads(request.data)
 
-    print(data)
+@app.route('/user/<string:id>', methods=['GET', 'POST'])
+def users(id):
+    print(id)
+    return id, 200
 
-    chat_room_id = str(data.get("chat_room_id"))
+
+@app.route('/dao/<string:id>/detail', methods=['GET', 'POST'])
+def daoDetail(id):
+
     nft_holdings = db.collection('dao').document(
-        chat_room_id).collection('nft_holdings').get()
+        id).collection('nft_holdings').get()
 
     estimated_value = 0
     invested_value = 0
@@ -309,28 +313,13 @@ def daoDetail():
         estimated_value += nft_dict['price_high']
         invested_value += nft_dict['price_buy']
     remained_balance = db.collection('dao').document(
-        chat_room_id).get().to_dict()['eth_remain']
-
-    # my_res = flask.Response()
-    #
-    # print(my_res)
+        id).get().to_dict()['eth_remain']
 
     return {
         'estimated_value': estimated_value,
         'invested_value': invested_value,
         'remained_balance': remained_balance
     }
-
-
-# if __name__ == '__main__':
-#     # enftAlert_local()
-#     app.run()
-
-# Define the internal path, idiomatic Flask definition
-@app.route('/user/<string:id>', methods=['GET', 'POST'])
-def users(id):
-    print(id)
-    return id, 200
 
 
 def main(request):
@@ -352,3 +341,8 @@ def main(request):
 
     # Return the result of the internal app routing and processing
     return return_value
+
+
+if __name__ == '__main__':
+    # enftAlert_local()
+    app.run()
