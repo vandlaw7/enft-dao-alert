@@ -301,15 +301,26 @@ def users(id):
 
 @app.route('/dao/<string:id>/detail', methods=['GET', 'POST'])
 def daoDetail(id):
+    print(id)
 
-    nft_holdings = db.collection('dao').document(
-        id).collection('nft_holdings').get()
+    nft_holdings_collection = db.collection('dao').document(id)\
+        .collection('nft_holdings').get()
+    nft_holdings = {}
+
+    gov_distribution = db.collection('dao').document(id)\
+        .collection('gov_distribution').document('distribution')\
+        .get().to_dict()
+
+    gov_values = db.collection('dao').document(id)\
+        .collection('gov_values').document('values')\
+        .get().to_dict()
 
     estimated_value = 0
     invested_value = 0
-    for nft in nft_holdings:
+    for nft in nft_holdings_collection:
         nft_dict = nft.to_dict()
-        # print(nft_dict)
+        nft_holdings[nft.id] = nft_dict
+
         estimated_value += nft_dict['price_high']
         invested_value += nft_dict['price_buy']
     remained_balance = db.collection('dao').document(
@@ -318,8 +329,15 @@ def daoDetail(id):
     return {
         'estimated_value': estimated_value,
         'invested_value': invested_value,
-        'remained_balance': remained_balance
+        'remained_balance': remained_balance,
+        'nft_holdings': nft_holdings,
+        'gov_distribution': gov_distribution,
+        'gov_values': gov_values
     }
+
+
+# @app.route('/dao/<string:id>/detail/<string:nft_id>', methods=['GET', 'POST'])
+# def daoNftHoldingDetail(id, nft_id):
 
 
 def main(request):
@@ -345,4 +363,4 @@ def main(request):
 
 if __name__ == '__main__':
     # enftAlert_local()
-    app.run()
+    app.run(debug=True)

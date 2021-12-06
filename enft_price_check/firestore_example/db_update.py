@@ -15,11 +15,12 @@ db = firestore.client()
 # db.collection('persons').document('p1').update({'age': firestore.Increment(10)})
 # db.collection('persons').document('p2').update({'address': 'London'})
 # db.collection('persons').document('p2').update({'socials': firestore.ArrayRemove(["twitter"])})
-db.collection('persons').document('p2').update({'socials': firestore.ArrayUnion(["twitter"])})
+db.collection('persons').document('p2').update(
+    {'socials': firestore.ArrayUnion(["twitter"])})
 
 # Update data - Unknown key
 # First way
-docs = db.collection('persons').get()
+docs = db.collection('persons').g1et()
 '''for doc in docs:
     if doc.to_dict()['age'] >= 36:
         key = doc.id
@@ -30,4 +31,5 @@ docs = db.collection('persons').get()
 docs = db.collection('persons').where("age", ">=", 40).get()
 for doc in docs:
     key = doc.id
-    db.collection('persons').document(key).update({"age_group": "older than 50 "})
+    db.collection('persons').document(key).update(
+        {"age_group": "older than 50 "})
